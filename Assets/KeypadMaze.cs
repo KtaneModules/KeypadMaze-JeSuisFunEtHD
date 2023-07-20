@@ -4,298 +4,111 @@ using UnityEngine;
 using KModkit;
 using System.Linq;
 using System;
-using Random = System.Random;
+using Random = UnityEngine.Random;
 
 public class KeypadMaze : MonoBehaviour {
     public int maze;
+    int mazeSize = 6;
+    int mazeCount = 9;
     public KMBombModule module;
     public KMBombInfo info;
     public KMAudio sfx;
     public int[] coord;
-    public int[] yellow = { 0, 0, 0, 0, 0 };
+    public int[] yellow = {0, 0, 0, 0, 0};
     public char pos;
     public KMSelectable[] keypad;
     public KMSelectable[] directional;
     public GameObject[] walls;
-    Random rnd = new Random();
     public TextMesh MazeDisp;
     public TextMesh[] Inputs;
     public int[] usersanswer = {0, 0};
     public int expanswer;
     public bool active;
     public bool solved;
-    public Color[] Direccolors = { new Color(1f, 0f, 0f), new Color(0f, 1f, 0f), new Color(0f, 0f, 1f), new Color(1f, 1f, 0f)};
-    public string[] directions = { "urdl", "urld", "uldr", "udrl", "ulrd", "udlr",
-        "rdlu", "rdul", "rudl", "ruld", "rlud", "rldu",
-        "lurd", "ludr", "ldur", "ldru", "lrdu", "lrud",
-        "dulr", "durl", "drul", "drlu", "dlur", "dlru"};
-    public string currentDirections;
-    public int[][] order = { new[]{1, 2, 2, 4, 2, 4, 4, 2, 1, 1,
-    2, 2, 1, 4, 3, 3, 4, 2, 4, 2,
-    1, 1, 2, 3, 3, 1, 1, 1, 2, 3,
-    3, 1, 2, 3, 1, 4, 4, 4, 3, 1,
-    2, 3, 4, 3, 4, 4, 4, 3, 4, 1,
-    1, 2, 2, 3, 3, 4, 4, 4, 2, 4,
-    2, 1, 2, 2, 1, 2, 3, 3, 1, 2,
-    3, 3, 3, 1, 2, 3, 2, 1, 1, 2,
-    3, 4, 4, 1, 4, 3, 4, 3, 4, 1,
-    2, 4, 3, 1, 1, 4, 2, 3, 4, 1},
-    new[]{1, 2, 1, 3, 3, 3, 1, 2, 1, 4,
-    3, 2, 3, 2, 4, 1, 3, 1, 4, 2,
-    1, 4, 3, 2, 3, 3, 4, 2, 2, 2,
-    1, 4, 2, 4, 4, 2, 3, 1, 1, 1,
-    4, 4, 4, 4, 1, 3, 2, 1, 3, 4,
-    3, 1, 3, 2, 4, 3, 3, 1, 4, 4,
-    1, 3, 1, 1, 4, 1, 2, 3, 4, 4,
-    3, 3, 3, 3, 2, 4, 1, 2, 4, 3,
-    2, 1, 1, 3, 2, 1, 1, 2, 2, 3,
-    2, 1, 1, 2, 1, 4, 4, 4, 4, 3,},
-    new[]{ 4, 1, 4, 4, 2, 1, 1, 1, 3, 3,
-    2, 3, 4, 1, 3, 4, 1, 3, 3, 2,
-    4, 3, 2, 1, 1, 3, 1, 2, 3, 1,
-    2, 4, 3, 3, 3, 2, 4, 2, 2, 4,
-    1, 2, 2, 4, 1, 4, 2, 4, 2, 1,
-    2, 1, 1, 3, 4, 1, 1, 1, 2, 1,
-    1, 1, 4, 2, 3, 4, 3, 1, 2, 4,
-    4, 3, 2, 3, 2, 4, 3, 4, 3, 3,
-    3, 4, 2, 2, 1, 1, 4, 1, 1, 4,
-    3, 3, 2, 3, 4, 2, 3, 4, 2, 4},
-    new[]{ 2, 3, 2, 2, 4, 1, 2, 1, 4, 4,
-        2, 2, 3, 3, 3, 1, 4, 1, 2, 3,
-        1, 3, 2, 3, 2, 3, 4, 2, 1, 4,
-        4, 4, 1, 1, 3, 1, 2, 1, 3, 1,
-        3, 3, 4, 4, 4, 4, 1, 4, 1, 3,
-        3, 4, 1, 2, 3, 3, 4, 2, 3, 3,
-        2, 3, 1, 4, 2, 4, 2, 4, 4, 1,
-        4, 2, 3, 2, 1, 1, 2, 4, 1, 2,
-        2, 3, 1, 1, 4, 1, 3, 1, 3, 4,
-        1, 4, 2, 1, 4, 3, 2, 1, 4, 3},
-    new[]{ 4, 3, 3, 3, 2, 3, 3, 1, 4, 3,
-        2, 1, 3, 4, 1, 4, 2, 1, 2, 4,
-        3, 1, 2, 3, 1, 4, 4, 1, 4, 2,
-        2, 4, 2, 2, 2, 1, 1, 2, 4, 4,
-        3, 1, 4, 3, 2, 1, 4, 2, 1, 3,
-        3, 1, 4, 1, 1, 2, 4, 3, 2, 4,
-        2, 1, 2, 2, 3, 3, 4, 3, 3, 2,
-        3, 1, 4, 4, 1, 3, 4, 3, 3, 3,
-        4, 2, 4, 3, 2, 1, 1, 2, 2, 1,
-        4, 4, 4, 1, 2, 1, 2, 1, 4, 3},
-    new[]{ 1, 1, 4, 1, 3, 3, 3, 2, 4, 1,
-    1, 4, 1, 2, 1, 2, 3, 3, 2, 4,
-    1, 2, 3, 4, 1, 2, 2, 1, 2, 3,
-    2, 3, 3, 4, 4, 3, 4, 4, 2, 4,
-    2, 3, 1, 3, 2, 2, 3, 1, 3, 2,
-    2, 2, 1, 4, 3, 4, 3, 3, 2, 2,
-    3, 1, 2, 4, 3, 1, 2, 4, 2, 2,
-    1, 4, 3, 3, 3, 4, 2, 4, 4, 3,
-    4, 2, 1, 3, 1, 4, 1, 2, 3, 1,
-    4, 2, 1, 1, 2, 2, 2, 4, 4, 4},
-    new[]{ 2, 1, 3, 4, 4, 4, 3, 4, 1, 1,
-    3, 4, 2, 1, 2, 3, 2, 2, 2, 1,
-    1, 3, 1, 3, 2, 2, 1, 4, 4, 2,
-    4, 1, 1, 1, 3, 2, 2, 1, 1, 4,
-    1, 2, 4, 3, 4, 1, 4, 1, 3, 3,
-    3, 2, 2, 2, 4, 3, 4, 1, 3, 4,
-    3, 4, 3, 4, 3, 3, 4, 2, 4, 4,
-    3, 2, 4, 3, 2, 4, 1, 2, 3, 2,
-    1, 3, 4, 4, 1, 4, 1, 4, 2, 3,
-    4, 3, 1, 2, 2, 2, 3, 1, 2, 3,},
-    new[]{ 3, 3, 4, 1, 2, 4, 2, 2, 1, 4,
-    4, 2, 3, 1, 1, 2, 4, 1, 2, 4,
-    3, 3, 3, 4, 2, 3, 1, 4, 4, 1,
-    2, 1, 1, 3, 3, 1, 4, 2, 3, 2,
-    2, 4, 4, 3, 1, 4, 4, 1, 4, 3,
-    4, 3, 2, 4, 3, 3, 2, 3, 1, 2,
-    2, 1, 1, 2, 3, 3, 2, 2, 1, 2,
-    1, 1, 4, 1, 4, 1, 3, 4, 3, 2,
-    3, 2, 2, 2, 1, 1, 4, 1, 3, 3,
-    1, 4, 4, 3, 1, 2, 3, 4, 2, 4,},
-    new[]{ 2, 1, 4, 2, 2, 3, 2, 3, 4, 1,
-    2, 4, 3, 4, 1, 2, 4, 3, 3, 3,
-    1, 1, 3, 4, 1, 4, 4, 3, 3, 1,
-    1, 2, 4, 2, 1, 3, 1, 4, 2, 2,
-    1, 1, 3, 4, 4, 1, 1, 4, 1, 4,
-    2, 3, 4, 3, 1, 1, 2, 2, 3, 3,
-    4, 1, 2, 3, 4, 4, 4, 2, 4, 3,
-    2, 3, 2, 2, 1, 3, 2, 3, 1, 2,
-    1, 2, 4, 2, 3, 3, 2, 3, 1, 1,
-    3, 2, 4, 1, 4, 3, 1, 1, 4, 4,},
-    new[]{ 1, 4, 2, 3, 2, 3, 3, 2, 4, 3,
-    4, 2, 1, 1, 1, 2, 4, 2, 4, 1,
-    4, 1, 4, 2, 3, 4, 3, 3, 1, 2,
-    4, 1, 2, 3, 1, 3, 2, 3, 4, 1,
-    1, 3, 2, 4, 1, 2, 3, 4, 2, 2,
-    2, 4, 3, 2, 4, 4, 3, 3, 4, 1,
-    1, 3, 3, 1, 1, 4, 1, 1, 3, 4,
-    3, 2, 4, 1, 3, 1, 2, 4, 2, 2,
-    2, 1, 2, 4, 4, 3, 2, 1, 3, 4,
-    1, 2, 3, 2, 1, 1, 3, 3, 4, 4,}};
-    public char[][] mazes = { new[]{'0', '2', '4', '3', '3', '0', '3', '2', '7', '0',
-    '6', 'a', 'a', 'c', '9', '2', 'd', '7', '9', '3',
-    '1', '6', '7', '5', '8', '6', '4', '1', '5', '8',
-    '0', '5', '8', '6', '7', '1', '6', 'a', 'a', '4',
-    '2', '7', '6', 'd', '8', '6', '8', '6', '7', '3',
-    '3', '9', '5', '7', '6', 'c', '2', '8', '9', '1',
-    '1', '5', 'a', '8', '9', '5', 'b', 'a', '8', '3',
-    '6', '7', '3', '2', 'd', 'a', '8', '6', '7', '1',
-    '1', '9', '9', '6', 'a', '7', '6', '8', '5', '4',
-    '0', '1', '1', '1', '2', '8', '1', '2', '4', '0'},
-    //---------------------------------------------\\
-    new[]{'2', '4', '3', '2', '4', '2', '4', '2', '4', '0',
-    '2', 'a', 'd', '4', '6', '7', '2', 'a', 'a', '4',
-    '2', 'a', 'a', 'b', '8', '5', 'b', 'a', 'a', '4',
-    '0', '2', '7', '9', '2', 'a', '8', '3', '6', '7',
-    '2', '7', '9', '5', 'a', 'a', '7', '5', '8', '1',
-    '3', '5', 'd', 'a', 'a', '7', 'e', '7', '6', '4',
-    '5', '7', '2', '7', '3', 'e', '8', '5', '8', '0',
-    '3', '5', 'a', 'c', '5', '8', '6', '7', '6', '4',
-    '1', '6', '4', '9', '6', 'a', '8', '1', '9', '3',
-    '0', '1', '0', '1', '5', 'a', 'a', '4', '1', '1'},
-    //---------------------------------------------\\
-    new[]{'0', '3', '2', '4', '2', '4', '3', '2', '4', '0',
-    '0', '5', '7', '6', '7', '2', '8', '6', 'b', '4',
-    '2', '7', 'e', '8', '5', 'b', 'a', 'd', '8', '3',
-    '2', '8', '9', '6', '7', '5', '4', '3', '6', '8',
-    '6', '7', '1', '5', '8', '3', '6', '8', '9', '0',
-    '1', '1', '6', 'a', '7', '9', '1', '2', 'd', '4',
-    '2', 'b', '8', '6', 'c', '9', '2', 'a', '7', '3',
-    '3', '5', '7', '9', '9', '5', 'b', 'a', '8', '1',
-    '5', 'a', '8', '5', 'd', 'a', '8', '2', 'a', '4',
-    '0', '0', '2', '4', '2', 'a', 'a', '4', '2', '4'},
-    //---------------------------------------------\\
-    new[]{'0', '3', '3', '0', '3', '3', '3', '3', '2', '4',
-    '2', 'c', '9', '6', 'd', '8', '5', '8', '3', '3',
-    '2', '8', '9', '9', '0', '6', 'b', 'a', '8', '1',
-    '0', '6', '8', '9', '3', '9', '5', '4', '6', '7',
-    '0', '5', '7', 'e', '8', '5', 'b', '7', '9', '1',
-    '6', '7', '1', '5', 'a', '7', '5', 'c', '9', '0',
-    '1', '9', '6', 'a', 'a', '8', '3', '9', '5', '4',
-    '3', '9', '5', '7', '6', '7', 'e', '8', '6', '7',
-    '1', 'e', 'a', 'c', '5', '8', '5', 'a', '8', '1',
-    '0', '1', '0', '1', '2', 'a', '4', '0', '2', '4'},
-    //---------------------------------------------\\
-    new[]{'0', '0', '3', '6', '4', '3', '2', 'a', '4', '0',
-    '2', '7', '9', '9', '6', '8', '2', '4', '6', '4',
-    '3', '9', '5', 'd', '8', '6', '4', '6', 'd', '4',
-    '9', '5', '4', '6', '4', '5', '4', '9', '6', '4',
-    '1', '6', 'b', '8', '6', 'a', '7', '5', '8', '3',
-    '3', '5', '8', '6', '8', '6', '8', '6', '7', '1',
-    '1', '6', 'a', 'd', 'a', 'd', '7', '9', 'e', '4',
-    '3', '5', '4', '6', 'a', '7', '9', '5', '8', '3',
-    '1', '3', '6', '8', '3', '5', '8', '3', '2', '8',
-    '0', '1', '5', '4', '5', 'a', '4', '5', '4', '0'},
-    //---------------------------------------------\\
-    new[]{'a', '4', '2', '7', '3', '3', '3', '3', '3', '0',
-    '3', '6', '4', '9', '9', '9', '9', '1', '9', '3',
-    '1', '9', '6', '8', '5', '8', '9', '6', '8', '1',
-    '3', '5', '8', '6', 'a', '7', '9', '5', 'b', '4',
-    '5', '4', '6', '8', '6', '8', '1', '6', '8', '3',
-    '0', '6', '8', '6', 'c', '2', '4', 'e', '7', '1',
-    '0', '5', '7', '9', '5', 'a', '7', '9', '5', '4',
-    '2', 'a', 'd', '8', '6', 'b', '8', '1', '3', '3',
-    '2', '7', '2', '7', '9', '5', 'a', 'a', 'c', '1',
-    '0', '5', '4', '1', '5', 'a', 'a', '4', '1', '0'},
-   //---------------------------------------------\\
-    new[]{'0', '3', '3', '2', 'a', '4', '3', '3', '3', '3',
-    '3', '9', '5', '7', '6', 'a', '8', '9', '1', '1',
-    '1', '5', '7', '1', '5', '7', '3', 'e', 'a', '4',
-    '2', '7', '9', '2', 'a', '8', 'e', '8', '2', '7',
-    '6', '8', '1', '6', 'a', '4', '9', '2', '7', '1',
-    '1', '6', '7', 'e', 'a', 'a', '8', '6', '8', '3',
-    '3', '5', '8', '9', '6', 'a', 'b', '8', '0', '9',
-    '5', 'a', 'a', 'd', '8', '6', '8', '6', '4', '1',
-    '0', '6', '7', '2', 'a', '8', '6', '8', '6', '4',
-    '0', '1', '5', '4', '2', 'a', '8', '2', '8', '0'},
-    //---------------------------------------------\\
-    new[]{'0', '0', '3', '2', '4', '3', '3', '3', '2', '4',
-    '2', 'a', 'd', '4', '2', '8', 'e', '8', '6', '4',
-    '2', '7', '6', 'b', 'a', '7', '9', '3', '5', '4',
-    '3', '9', '5', '8', '6', '8', '9', '5', '7', '0',
-    '5', '8', '2', '7', 'e', '7', '5', '7', '5', '4',
-    '2', 'a', '7', '9', '9', '5', 'b', '8', '2', '4',
-    '2', 'a', 'd', '8', '9', '3', '5', 'a', 'a', '4',
-    '2', '4', '2', '7', '9', '5', 'a', 'b', 'a', '4',
-    '2', 'a', '7', '9', '5', 'a', '7', '5', 'a', '4',
-    '0', '2', '8', '1', '2', 'a', '8', '2', '4', '0'},
-    //---------------------------------------------\\
-    new[]{'0', '0', '3', '6', '7', '2', '4', '3', '3', '0',
-    '2', 'a', '8', '9', '9', '6', '4', '5', '8', '3',
-    '2', '7', '6', '8', 'e', '8', '6', 'a', '7', '1',
-    '3', '9', '5', 'a', '8', '3', 'e', '7', '5', '7',
-    '1', '5', 'a', '4', '6', 'd', '8', '5', '7', '1',
-    '2', '7', '6', '7', '9', '6', 'a', '7', '9', '0',
-    '2', 'c', '1', '9', '9', '9', '6', 'd', '8', '3',
-    '3', '5', 'a', 'd', '8', '5', '8', '3', '6', '8',
-    '1', '6', 'a', 'a', 'a', 'a', 'a', 'c', '9', '0',
-    '0', '1', '2', '4', '2', '4', '0', '1', '1', '0'},
-    //---------------------------------------------\\
-    new[]{'2', '4', '0', '6', 'a', '4', '6', '4', '0', '0',
-    '0', '6', '7', '9', '6', '4', '9', '6', 'a', '4',
-    '3', '5', 'c', '9', '9', '6', '8', '5', 'a', '7',
-    '5', '7', '9', '5', '8', '9', '6', 'a', '7', '1',
-    '0', '1', 'e', '7', '6', '8', '5', '7', '9', '0',
-    '6', '7', '9', '1', '5', 'a', '4', '9', 'e', '4',
-    '1', '9', '5', 'a', 'a', 'a', '7', '9', '9', '3',
-    '2', 'd', 'a', 'b', 'a', 'a', '8', '5', 'c', '1',
-    '2', '7', '3', '9', '6', '7', '6', '7', '5', '4',
-    '0', '1', '1', '1', '1', '1', '1', '1', '0', '0'} };
-    public int[] dispNumbers = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    public int[][] order = { new[]{2, 2, 3, 4, 1, 1, 4, 1, 3, 3, 3, 1, 1, 2, 4, 3, 2, 2,
+        4, 2, 2, 4, 1, 3, 3, 3, 4, 2, 4, 1, 3, 4, 4, 1, 1, 2},
+    new[]{4, 2, 4, 4, 3, 4, 3, 2, 4, 1, 1, 2, 3, 1, 4, 3, 1, 1,
+    1, 4, 1, 3, 2, 4, 2, 4, 3, 2, 2, 3, 1, 3, 2, 2, 1, 3},
+    new[]{4, 3, 2, 1, 1, 2, 3, 1, 2, 3, 2, 3, 2, 4, 4, 1, 1, 4,
+    4, 1, 4, 1, 1, 4, 1, 4, 3, 3, 4, 2, 2, 2, 3, 2, 3, 3},
+    new[]{3, 2, 4, 3, 3, 2, 1, 4, 3, 1, 4, 1, 4, 4, 3, 3, 2, 2,
+    4, 3, 1, 1, 2, 1, 2, 4, 1, 2, 4, 2, 2, 3, 1, 3, 1, 4},
+    new[]{3, 2, 2, 1, 3, 2, 4, 4, 2, 1, 3, 1, 4, 3, 3, 4, 4, 1,
+    1, 1, 3, 3, 2, 3, 1, 4, 4, 2, 3, 2, 2, 1, 1, 2, 4, 4},
+    new[]{3, 3, 3, 2, 4, 4, 3, 2, 4, 1, 1, 4, 3, 4, 1, 3, 2, 1,
+    2, 4, 4, 1, 3, 1, 2, 2, 1, 2, 1, 3, 3, 2, 4, 1, 2, 4},
+    new[]{3, 2, 4, 4, 1, 2, 1, 1, 4, 3, 1, 1, 1, 2, 3, 4, 3, 2,
+    3, 4, 3, 2, 2, 4, 2, 2, 1, 4, 4, 1, 4, 3, 3, 2, 3, 1},
+    new[]{3, 2, 3, 2, 3, 1, 3, 2, 2, 4, 1, 2, 1, 3, 3, 4, 4, 1,
+    4, 4, 1, 1, 4, 1, 2, 3, 1, 4, 2, 2, 4, 1, 3, 3, 4, 2},
+    new[]{1, 3, 1, 4, 3, 1, 2, 1, 4, 3, 3, 2, 3, 1, 3, 2, 4, 2,
+    1, 1, 3, 1, 4, 4, 4, 4, 3, 2, 4, 2, 1, 3, 4, 2, 2, 2} };
+    /* 0 - no walls, 1 - up wall, 2 - right wall, 3 - down wall, 4 - left wall
+    5 - up right walls, 6 - down right walls, 7 - down left walls, 8 - up left walls,
+    9 - up down walls, a - right left walls, b - left down right walls, c - up left down walls,
+    d - up left right walls*/
+    public char[][] mazes = { new[] {'8', 'e', '8', '1', '1', 'e','7', '9', '2', 'a', '7', '5', 'd', '8', '6', 'a', '8', '6', '7',
+        '2', '8', '6', '7', '5', '8', '6', '7', '5', 'd', 'a', '7', '9', 'e', 'b', '7', '6'},
+    new[]{'8', '9', '1', '1', '1', '5','a', '8', '6', 'a', 'a', 'a', 'a', '7', 'e', 'a', 'a', 'a',
+        'a', '8', '1', '2', 'a', 'b', 'a', 'a', 'a', 'b', '7', '5', 'b', 'b', 'b', 'c', '9', '6'},
+    new[]{'8', '9', '5', '8', '5', 'd', '4', '5', '7', '6', '4', '2', 'a', '7', '5', 'd', 'a', 'a',
+        '7', 'e', 'a', '7', '6', 'a', '8', '9', '3', '5', '8', '6', '7', '9', 'e', 'b', '7', 'e'},
+    new[]{'8', '5', '8', '9', '5', 'd', 'a', 'a', '7', 'e', '4', '6', 'a', '7', '9', '5', 'a', 'd',
+        'a', '8', '9', '6', '7', '2', 'a', '7', '9', '9', '9', '2', '7', '9', '9', 'e', 'c', '6'},
+    new[]{'8', '9', '9', '9', '5', 'd', '4', '9', '9', '5', '7', '6', 'a', 'd', '8', '3', '9', '5',
+        '7', '6', '4', '9', '5', 'b', '8', '1', '3', 'e', '7', '5', 'b', '7', 'e', 'c', '9', '6'},
+    new[]{'8', '9', '9', '5', '8', '5', 'a', 'd', '8', '6', 'a', 'a', '4', '6', '7', '5', 'a', 'a',
+        '7', '9', '5', '7', '6', 'a', '8', '9', '6', '8', '5', 'a', '7', '9', 'e', 'b', '7', '6'},
+    new[]{'8', '9', '9', '9', '9', '5', 'a', '8', '9', '5', '8', '6', 'b', '7', '5', 'a', '7', '5',
+        '8', '9', '6', '7', '9', '6', 'a', '8', '1', '9', '1', '5', '7', '6', 'b', 'c', '6', 'b'},
+    new[]{'c', '5', '8', '5', '8', '5', '8', '0', '6', '7', '2', 'a', 'a', 'a', 'c', '9', '6', 'b',
+        'a', '7', '9', '9', '9', '5', '4', '9', '5', 'c', '5', 'a', '7', 'e', '7', 'e', '7', '6'},
+    new[]{'8', '9', 'e', '8', '9', '5', '4', '9', '9', '3', 'e', 'a', 'b', '8', '9', '9', '9', '2',
+        '8', '2', '8', '5', '8', '6', 'a', 'a', 'a', 'a', '7', '5', 'b', '7', '6', 'b', 'c', '6', }};
+    public int[] dispNumbers = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,};
     private static int _moduleIDCounter = 1;
     private int _moduleID;
     void Awake()
     {
-        maze = rnd.Next(0, 10);
+        maze = Random.Range(0, mazeCount);
         while (yellow[4] != 1)
         {
-            yellow[0] = rnd.Next(0, 100);
+            yellow[0] = Random.Range(0, mazeSize * mazeSize);
             yellow[4] = order[maze][yellow[0]];
         }
         while (yellow[4] != 2)
         {
-            yellow[1] = rnd.Next(0, 100);
+            yellow[1] = Random.Range(0, mazeSize * mazeSize);
             yellow[4] = order[maze][yellow[1]];
         }
         while (yellow[4] != 3)
         {
-            yellow[2] = rnd.Next(0, 100);
+            yellow[2] = Random.Range(0, mazeSize * mazeSize);
             yellow[4] = order[maze][yellow[2]];
         }
         while (yellow[4] != 4)
         {
-            yellow[3] = rnd.Next(0, 100);
+            yellow[3] = Random.Range(0, mazeSize*mazeSize);
             yellow[4] = order[maze][yellow[3]];
         }
         module.OnActivate += delegate
         {
             _moduleID = _moduleIDCounter++;
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < mazeSize*mazeSize; i++)
             {
-                dispNumbers[i] = rnd.Next(0, 10);
+                dispNumbers[i] = Random.Range(0, 10);
             }
             active = true;
-            coord[0] = rnd.Next(0, 10);
-            coord[1] = rnd.Next(0, 10);
-            pos = mazes[maze][coord[1] * 10 + coord[0]];
+            coord[0] = Random.Range(0, mazeSize);
+            coord[1] = Random.Range(0, mazeSize);
+            pos = mazes[maze][coord[1] * mazeSize + coord[0]];
             wallchange();
-            currentDirections = directions[rnd.Next(0, 24)];
-            foreach (char c in currentDirections)
-            {
-                directional[currentDirections.IndexOf(c, 0)].GetComponent<MeshRenderer>().material.color = Direccolors[directions[0].IndexOf(c, 0)];
-            }
             expanswer = dispNumbers[yellow[0]] * 1000 + dispNumbers[yellow[1]] * 100 + dispNumbers[yellow[2]] * 10 + dispNumbers[yellow[3]];
             Debug.LogFormat("[Keypad Maze #{0}] You are in maze {1}", _moduleID, maze+1);
             Debug.LogFormat("[Keypad Maze #{0}] Coordinates are counted in ''row, column'' format, with top left being 0, 0.", _moduleID);
             Debug.LogFormat("[Keypad Maze #{0}] Initial coordintaes are: {1}, {2}.", _moduleID, coord[1], coord[0]);
-            Debug.LogFormat("[Keypad Maze #{8}] Yellow cells are: {1}, {0}; {3}, {2}; {5}, {4}; {7}, {6}.", yellow[0] % 10, (yellow[0]-yellow[0]%10) / 10, yellow[1] % 10, (yellow[1] - yellow[1] % 10) / 10, yellow[2] % 10, (yellow[2] - yellow[2] % 10) / 10, yellow[3] % 10, (yellow[3] - yellow[3] % 10) / 10, _moduleID);
+            Debug.LogFormat("[Keypad Maze #{8}] Yellow cells are: {1}, {0}; {3}, {2}; {5}, {4}; {7}, {6}.", yellow[0] % mazeSize, (yellow[0]-yellow[0] % mazeSize) / mazeSize, yellow[1] % mazeSize, (yellow[1] - yellow[1] % mazeSize) / mazeSize, yellow[2] % mazeSize, (yellow[2] - yellow[2] % mazeSize) / mazeSize, yellow[3] % mazeSize, (yellow[3] - yellow[3] % mazeSize) / mazeSize, _moduleID);
             Debug.LogFormat("[Keypad Maze #{0}] Correct answer is {1}", _moduleID, expanswer.ToString().PadLeft(4, '0'));
         };
     }
@@ -321,7 +134,7 @@ public class KeypadMaze : MonoBehaviour {
 
     void DirecPress (int x)
     {
-        directional[x].OnInteract += delegate { if (!active || solved) { return false; } movecheck(currentDirections[x]); GetComponent<KMSelectable>().AddInteractionPunch(0.1f); sfx.PlaySoundAtTransform("Moved", transform); return false; };
+        directional[x].OnInteract += delegate { if (!active || solved || !movecheck(x)) { return false; } GetComponent<KMSelectable>().AddInteractionPunch(0.1f); sfx.PlaySoundAtTransform("Moved", transform); return false; };
     }
 
     void NumberPress (int x)
@@ -333,73 +146,70 @@ public class KeypadMaze : MonoBehaviour {
 	void Update () {
 		
 	}
-    void movecheck(char c)
+    bool movecheck(int c)
     {
         switch (c)
         {
-            case 'u':
+            case 0:
                 if (pos.EqualsAny('1', '5', '8', '9', 'c', 'd', 'e'))
                 {
-                    Debug.LogFormat("[Keypad Maze #{0}] Strike because of wall hit :/", _moduleID);
-                    module.HandleStrike();
+                    return false;
                 }
                 else
                 {
                     coord[1] -= 1;
                     while (coord[1] < 0)
                     {
-                        coord[1] += 10;
+                        coord[1] += mazeSize;
                     }
-                    pos = mazes[maze][coord[1] * 10 + coord[0]];
+                    pos = mazes[maze][coord[1] * mazeSize + coord[0]];
                     wallchange();
                 }
                 break;
-            case 'r':
+            case 1:
                 if (pos.EqualsAny('2', '5', '6', 'a', 'b', 'd', 'e'))
                 {
-                    Debug.LogFormat("[Keypad Maze #{0}] Strike because of wall hit :/", _moduleID);
-                    module.HandleStrike();
+                    return false;
                 }
                 else
                 {
                     coord[0] += 1;
-                    coord[0] = coord[0] % 10;
-                    pos = mazes[maze][coord[1] * 10 + coord[0]];
+                    coord[0] = coord[0] % mazeSize;
+                    pos = mazes[maze][coord[1] * mazeSize + coord[0]];
                     wallchange();
                 }
-            break;
-            case 'l':
+                break;
+            case 2:
                 if (pos.EqualsAny('4', '7', '8', 'a', 'b', 'c', 'd'))
                 {
-                    Debug.LogFormat("[Keypad Maze #{0}] Strike because of wall hit :/", _moduleID);
-                    module.HandleStrike();
+                    return false;
                 }
                 else
                 {
                     coord[0] -= 1;
                     while (coord[0] < 0)
                     {
-                        coord[0] += 10;
+                        coord[0] += mazeSize;
                     }
-                    pos = mazes[maze][coord[1] * 10 + coord[0]];
+                    pos = mazes[maze][coord[1] * mazeSize + coord[0]];
                     wallchange();
                 }
                 break;
-            case 'd':
+            case 3:
                 if (pos.EqualsAny('3', '6', '7', '9', 'b', 'c', 'e'))
                 {
-                    Debug.LogFormat("[Keypad Maze #{0}] Strike because of wall hit :/", _moduleID);
-                    module.HandleStrike();
+                    return false;
                 }
                 else
                 {
                     coord[1] += 1;
-                    coord[1] = coord[1] % 10;
-                    pos = mazes[maze][coord[1] * 10 + coord[0]];
+                    coord[1] = coord[1] % mazeSize;
+                    pos = mazes[maze][coord[1] * mazeSize + coord[0]];
                     wallchange();
                 }
                 break;
         }
+        return true;
     }
     void wallchange()
     {
@@ -500,8 +310,8 @@ public class KeypadMaze : MonoBehaviour {
                 walls[0].SetActive(true);
             break;
         }
-        MazeDisp.text = dispNumbers[coord[1] * 10 + coord[0]].ToString();
-        if ((coord[1] * 10 + coord[0]).EqualsAny(yellow[0], yellow[1], yellow[2], yellow[3]))
+        MazeDisp.text = dispNumbers[coord[1] * mazeSize + coord[0]].ToString();
+        if ((coord[1] * mazeSize + coord[0]).EqualsAny(yellow[0], yellow[1], yellow[2], yellow[3]))
         {
             foreach (GameObject wall in walls)
             {
@@ -563,7 +373,7 @@ public class KeypadMaze : MonoBehaviour {
                 }
                 else
                 {
-                    Debug.LogFormat("[Keypad Maze #{0}] You submitted {1} which is incorrect. Module striked.", _moduleID, usersanswer[0].ToString().PadLeft(4, '0'));
+                    Debug.LogFormat("[Keypad Maze #{0}] You submitted {1} which is incorrect. Module struck.", _moduleID, usersanswer[0].ToString().PadLeft(4, '0'));
                     module.HandleStrike();
                     usersanswer[0] = 0;
                     usersanswer[1] = 0;
@@ -586,15 +396,15 @@ public class KeypadMaze : MonoBehaviour {
         MazeDisp.color = new Color(0f, 1f, 0f);
         solved = true;
         module.HandlePass();
-        string yeah = "yeah";
+        string yeah = "Done";
         foreach (TextMesh input in Inputs)
         {
             input.color = new Color(0f, 1f, 0f);
         }
-        Inputs[0].text = "N";
-        Inputs[1].text = " i";
-        Inputs[2].text = "c";
-        Inputs[3].text = "e";
+        Inputs[0].text = "G";
+        Inputs[1].text = "o";
+        Inputs[2].text = "o";
+        Inputs[3].text = "d";
         walls[3].SetActive(false);
         walls[1].SetActive(false);
         walls[2].SetActive(false);
@@ -616,12 +426,17 @@ public class KeypadMaze : MonoBehaviour {
         }
     }
 #pragma warning disable 414
-    private string TwitchHelpMessage = "!{0} abcd0123456789rs / press abcd0123456789rs (pressing every valid button). R - reset, S - submit.";
+    private string TwitchHelpMessage = "Command for this module consist of string of valid characters. Valid characters are: u, r, l, d, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, s, c. urld - directional buttons, to move within the maze. Digits 0-9 are digits" +
+        " on number pad for code submission. s - submit c - clear. For example, command !{0} ur123c4567s will move you up, then right, then enter digits 123, then clear the input, then enter digihts 4567 and submit them.";
 #pragma warning restore 414
     private IEnumerator ProcessTwitchCommand(string command)
     {
         command = command.ToLowerInvariant().Trim();
         var split = command.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        if (split.Length == 0)
+        {
+            yield break;
+        }
         if (split[0].StartsWith("press") || split.Length == 1)
         {
            
@@ -632,7 +447,7 @@ public class KeypadMaze : MonoBehaviour {
             }
             foreach (char i in input)
             {
-                if (input.Any(letter => !letter.EqualsAny('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'r', 's')))
+                if (input.Any(letter => !letter.EqualsAny('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'u', 'l', 'd', 'r', 'c', 's')))
                 {
                     yield break;
                 }
@@ -673,19 +488,19 @@ public class KeypadMaze : MonoBehaviour {
                     case '9':
                         keypad[8].OnInteract();
                         break;
-                    case 'a':
+                    case 'u':
                         directional[0].OnInteract();
                         break;
-                    case 'b':
+                    case 'r':
                         directional[1].OnInteract();
                         break;
-                    case 'c':
+                    case 'l':
                         directional[2].OnInteract();
                         break;
                     case 'd':
                         directional[3].OnInteract();
                         break;
-                    case 'r':
+                    case 'c':
                         keypad[9].OnInteract();
                         break;
                     case 's':
