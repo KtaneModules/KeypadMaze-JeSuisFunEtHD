@@ -14,13 +14,16 @@ MonoBehaviour:
   id: KeypadMaze
   title: Keypad Maze
   author: lexa
-  description: 'Submit 4-digit code based on the maze in you are.
+  description: 'Submit a 4-digit code based on the maze you are in.
 
 
     Manual can be found in: ktane.timwi.de
 
 
+    Reserve manual: https://drive.google.com/file/d/12DMFHEhlwc9uYtHipUPzwfeGHifu1ost/view?usp=sharing
+
+
     Module id: KeypadMaze'
-  version: 1.0.0
+  version: 2.0.0
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 8d25bdeb44033614a858d179bf75ff80, type: 3}
